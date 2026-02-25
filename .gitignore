@@ -1,0 +1,14 @@
+# Maven
+target/
+*.class
+
+# IntelliJ
+.idea/
+*.iml
+*.iws
+
+# Environment / Secrets
+application.properties
+
+# Logs
+*.log
