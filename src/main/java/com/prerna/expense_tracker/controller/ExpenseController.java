@@ -1,5 +1,6 @@
 package com.prerna.expense_tracker.controller;
 
+import com.prerna.expense_tracker.dto.ApiResponse;
 import com.prerna.expense_tracker.dto.ExpenseRequest;
 import com.prerna.expense_tracker.dto.ExpenseResponse;
 import com.prerna.expense_tracker.service.ExpenseService;
@@ -21,29 +22,30 @@ public class ExpenseController {
     private final ExpenseService expenseService;
 
     @PostMapping
-    public ResponseEntity<ExpenseResponse> create(@Valid @RequestBody ExpenseRequest request) {
-        return ResponseEntity.ok(expenseService.createExpense(request));
+    public ResponseEntity<ApiResponse<ExpenseResponse>> create(@Valid @RequestBody ExpenseRequest request) {
+        return ResponseEntity.status(201)
+                .body(ApiResponse.created("Expense created successfully", expenseService.createExpense(request)));
     }
 
     @GetMapping
-    public ResponseEntity<List<ExpenseResponse>> getAll() {
-        return ResponseEntity.ok(expenseService.getAllExpenses());
+    public ResponseEntity<ApiResponse<List<ExpenseResponse>>> getAll() {
+        return ResponseEntity.ok(ApiResponse.success("Expenses fetched successfully", expenseService.getAllExpenses()));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ExpenseResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(expenseService.getExpenseById(id));
+    public ResponseEntity<ApiResponse<ExpenseResponse>> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success("Expense fetched successfully", expenseService.getExpenseById(id)));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ExpenseResponse> update(@PathVariable Long id,
-                                                  @Valid @RequestBody ExpenseRequest request) {
-        return ResponseEntity.ok(expenseService.updateExpense(id, request));
+    public ResponseEntity<ApiResponse<ExpenseResponse>> update(@PathVariable Long id,
+                                                               @Valid @RequestBody ExpenseRequest request) {
+        return ResponseEntity.ok(ApiResponse.success("Expense updated successfully", expenseService.updateExpense(id, request)));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> delete(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
         expenseService.deleteExpense(id);
-        return ResponseEntity.ok("Expense deleted successfully");
+        return ResponseEntity.ok(ApiResponse.success("Expense deleted successfully", null));
     }
 }
