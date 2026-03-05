@@ -6,12 +6,11 @@ import com.prerna.expense_tracker.dto.ExpenseResponse;
 import com.prerna.expense_tracker.service.ExpenseService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.collections4.Get;
-import org.apache.tomcat.util.http.parser.Authorization;
-import org.hibernate.sql.Delete;
-import org.hibernate.sql.Update;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -47,5 +46,15 @@ public class ExpenseController {
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
         expenseService.deleteExpense(id);
         return ResponseEntity.ok(ApiResponse.success("Expense deleted successfully", null));
+    }
+
+    @GetMapping("/filter")
+    public ResponseEntity<ApiResponse<List<ExpenseResponse>>> filter(
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+
+        List<ExpenseResponse> result = expenseService.filterExpenses(categoryId, startDate, endDate);
+        return ResponseEntity.ok(ApiResponse.success("Expenses filtered successfully", result));
     }
 }

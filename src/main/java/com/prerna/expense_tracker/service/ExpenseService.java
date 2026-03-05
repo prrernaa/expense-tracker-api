@@ -7,6 +7,8 @@ import com.prerna.expense_tracker.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -93,5 +95,34 @@ public class ExpenseService {
         Expense expense = expenseRepository.findByIdAndUser(id, user)
                 .orElseThrow(() -> new RuntimeException("Expense not found"));
         expenseRepository.delete(expense);
+    }
+
+    public List<ExpenseResponse> filterExpenses(Long categoryId,
+                                                LocalDate startDate,
+                                                LocalDate endDate) {
+        User user = getCurrentUser();
+        List<Expense> expenses;
+
+        if (categoryId != null && startDate != null && endDate != null) {
+            // Filter by both category and date range
+            expenses = expenseRepository
+                    .findByUserAndCategoryIdAndDateBetween(user, categoryId, startDate, endDate);
+
+        } else if (categoryId != null) {
+            // Filter by category only
+            expenses = expenseRepository.findByUserAndCategoryId(user, categoryId);
+
+        } else if (startDate != null && endDate != null) {
+            // Filter by date range only
+            expenses = expenseRepository.findByUserAndDateBetween(user, startDate, endDate);
+
+        } else {
+            // No filter — return all
+            expenses = expenseRepository.findByUser(user);
+        }
+
+        return expenses.stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
     }
 }
