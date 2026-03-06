@@ -3,13 +3,18 @@ package com.prerna.expense_tracker.controller;
 import com.prerna.expense_tracker.dto.ApiResponse;
 import com.prerna.expense_tracker.dto.ExpenseRequest;
 import com.prerna.expense_tracker.dto.ExpenseResponse;
+import com.prerna.expense_tracker.service.ExcelExportService;
 import com.prerna.expense_tracker.service.ExpenseService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -19,6 +24,7 @@ import java.util.List;
 public class ExpenseController {
 
     private final ExpenseService expenseService;
+    private final ExcelExportService excelExportService;
 
     @PostMapping
     public ResponseEntity<ApiResponse<ExpenseResponse>> create(@Valid @RequestBody ExpenseRequest request) {
@@ -29,11 +35,6 @@ public class ExpenseController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<ExpenseResponse>>> getAll() {
         return ResponseEntity.ok(ApiResponse.success("Expenses fetched successfully", expenseService.getAllExpenses()));
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<ExpenseResponse>> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.success("Expense fetched successfully", expenseService.getExpenseById(id)));
     }
 
     @PutMapping("/{id}")
@@ -57,4 +58,24 @@ public class ExpenseController {
         List<ExpenseResponse> result = expenseService.filterExpenses(categoryId, startDate, endDate);
         return ResponseEntity.ok(ApiResponse.success("Expenses filtered successfully", result));
     }
+
+    @GetMapping("/export")
+    public ResponseEntity<InputStreamResource> exportToExcel() throws IOException, IOException {
+        ByteArrayInputStream file = excelExportService.exportExpensesToExcel();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Disposition", "attachment; filename=expenses.xlsx");
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .contentType(MediaType.parseMediaType(
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(new InputStreamResource(file));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<ExpenseResponse>> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success("Expense fetched successfully", expenseService.getExpenseById(id)));
+    }
+
 }
