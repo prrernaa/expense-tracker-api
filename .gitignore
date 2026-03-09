@@ -7,8 +7,11 @@ target/
 *.iml
 *.iws
 
-# Environment / Secrets
+# Secrets
 application.properties
 
 # Logs
 *.log
+
+# Docker volumes (don't commit these)
+postgres_data/
