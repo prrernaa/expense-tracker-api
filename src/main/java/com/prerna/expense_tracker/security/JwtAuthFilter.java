@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
 
 //→ intercepts every request
 
@@ -24,6 +25,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private final JwtUtils jwtUtil;
     private final UserDetailsService userDetailsService;
     private final TokenBlacklistService tokenBlacklistService;
+
+    // Add this method
+    private static final List<String> PUBLIC_URLS = List.of(
+            "/api/auth/",
+            "/swagger-ui",
+            "/v3/api-docs",
+            "/actuator"
+    );
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
