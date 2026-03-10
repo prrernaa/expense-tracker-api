@@ -1,13 +1,14 @@
 # 💰 Expense Tracker API
 
-A production-grade RESTful API for personal expense management built with Java Spring Boot, featuring JWT authentication, Redis-based session management, pagination, Excel export, and Docker support.
+A production-grade RESTful API for personal expense management built with Java Spring Boot, featuring JWT authentication, Redis-based session management, pagination, Excel export, health monitoring and Docker support.
 
 ![Java](https://img.shields.io/badge/Java-21-orange)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0-green)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue)
-![Redis](https://img.shields.io/badge/Redis-Blacklisting-red)
+![Redis](https://img.shields.io/badge/Redis-7.0-red)
 ![Docker](https://img.shields.io/badge/Docker-Containerized-blue)
 ![Tests](https://img.shields.io/badge/Tests-10%20Passing-brightgreen)
+![Actuator](https://img.shields.io/badge/Actuator-Health%20Monitored-yellow)
 
 ---
 
@@ -16,12 +17,13 @@ A production-grade RESTful API for personal expense management built with Java S
 - ✅ User Registration & Login with JWT Authentication
 - ✅ JWT Logout with Redis-based Token Blacklisting
 - ✅ Expense & Category CRUD APIs
-- ✅ Pagination & Sorting for expense listing
+- ✅ Pagination & Sorting at database level
 - ✅ Filter expenses by category and date range
 - ✅ Category-wise expense summary with total
 - ✅ Excel export for expense reports
 - ✅ Standard API response wrapper with centralized exception handling
 - ✅ API Documentation with Swagger OpenAPI + JWT support
+- ✅ Health Monitoring with Spring Boot Actuator
 - ✅ Dockerized with Docker Compose
 - ✅ Unit tested with JUnit 5 & Mockito
 
@@ -40,6 +42,7 @@ A production-grade RESTful API for personal expense management built with Java S
 | Excel | Apache POI |
 | Testing | JUnit 5 + Mockito |
 | Documentation | Swagger OpenAPI 3 |
+| Monitoring | Spring Boot Actuator |
 | DevOps | Docker + Docker Compose |
 
 ---
@@ -58,6 +61,7 @@ docker-compose up --build
 
 App runs at `http://localhost:9091` ✅
 Swagger UI at `http://localhost:9091/swagger-ui/index.html` ✅
+Health Check at `http://localhost:9092/actuator/health` ✅
 
 ### Option 2 — Run Locally
 
@@ -116,7 +120,7 @@ To test protected APIs in Swagger:
 | PUT | /api/expenses/{id} | Update expense | ✅ |
 | DELETE | /api/expenses/{id} | Delete expense | ✅ |
 | GET | /api/expenses/filter | Filter by category/date | ✅ |
-| GET | /api/expenses/summary | Category-wise summary | ✅ |
+| GET | /api/expenses/summary | Category-wise total summary | ✅ |
 | GET | /api/expenses/export | Export to Excel | ✅ |
 
 ---
@@ -278,12 +282,35 @@ mvn test
 ```
 Request → JwtAuthFilter
               ↓
-    Is token blacklisted in Redis?
-         YES → 401 Unauthorized
-          NO → Is token valid?
-                YES → Set Authentication → Controller
-                 NO → 401 Unauthorized
+    Is URL public? (auth/swagger/actuator)
+         YES → Skip filter → Allow
+          NO → Is token blacklisted in Redis?
+                    YES → 401 Unauthorized
+                     NO → Is token valid?
+                            YES → Set Authentication → Controller
+                             NO → 401 Unauthorized
 ```
+
+---
+
+## 🩺 Health Monitoring
+
+Running on separate port for security isolation:
+```
+GET http://localhost:9092/actuator/health
+```
+```json
+{
+  "status": "UP",
+  "components": {
+    "db": { "status": "UP" },
+    "redis": { "status": "UP" },
+    "diskSpace": { "status": "UP" }
+  }
+}
+```
+
+Actuator runs on port **9092** intentionally — monitoring endpoints are never exposed on the public API port in production.
 
 ---
 
@@ -292,8 +319,7 @@ Request → JwtAuthFilter
 The `docker-compose.yml` spins up:
 - **PostgreSQL** on port 5433
 - **Spring Boot App** on port 9091
-
-Both are connected via a Docker network — no manual DB setup needed.
+- **Actuator Health** on port 9092
 ```bash
 docker-compose up --build    # Start
 docker-compose down          # Stop
