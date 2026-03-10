@@ -1,15 +1,24 @@
 package com.prerna.expense_tracker.service;
 
+import com.prerna.expense_tracker.dto.ApiResponse;
 import com.prerna.expense_tracker.dto.ExpenseRequest;
 import com.prerna.expense_tracker.dto.ExpenseResponse;
+import com.prerna.expense_tracker.dto.PaginatedResponse;
 import com.prerna.expense_tracker.entity.*;
 import com.prerna.expense_tracker.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -57,12 +66,12 @@ public class ExpenseService {
         return mapToResponse(expenseRepository.save(expense));
     }
 
-    public List<ExpenseResponse> getAllExpenses() {
-        return expenseRepository.findByUser(getCurrentUser())
-                .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
-    }
+//    public List<ExpenseResponse> getAllExpenses() {
+//        return expenseRepository.findByUser(getCurrentUser())
+//                .stream()
+//                .map(this::mapToResponse)
+//                .collect(Collectors.toList());
+//    }
 
     public ExpenseResponse getExpenseById(Long id) {
         User user = getCurrentUser();
@@ -124,5 +133,51 @@ public class ExpenseService {
         return expenses.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
+    }
+
+    public ApiResponse<PaginatedResponse<ExpenseResponse>> getAllExpensesPaginated(
+            int page, int size, String sortBy, String sortDir) {
+
+        User user = getCurrentUser();
+
+        Sort sort = sortDir.equalsIgnoreCase("desc")
+                ? Sort.by(sortBy).descending()
+                : Sort.by(sortBy).ascending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Page<Expense> expensePage = expenseRepository.findByUser(user, pageable);
+
+        List<ExpenseResponse> content = expensePage.getContent()
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+
+        PaginatedResponse<ExpenseResponse> response = new PaginatedResponse<>(
+                content,
+                expensePage.getNumber(),
+                expensePage.getTotalPages(),
+                expensePage.getTotalElements(),
+                expensePage.isLast()
+        );
+
+        return ApiResponse.success("Expenses fetched successfully", response);
+    }
+
+    public ApiResponse<Map<String, BigDecimal>> getExpenseSummary() {
+        User user = getCurrentUser();
+        List<Object[]> results = expenseRepository.getSummaryByCategory(user);
+
+        Map<String, BigDecimal> summary = new LinkedHashMap<>();
+        BigDecimal total = BigDecimal.ZERO;
+
+        for (Object[] row : results) {
+            String categoryName = (String) row[0];
+            BigDecimal amount = (BigDecimal) row[1];
+            summary.put(categoryName, amount);
+            total = total.add(amount);
+        }
+
+        summary.put("Total", total);
+        return ApiResponse.success("Summary fetched successfully", summary);
     }
 }

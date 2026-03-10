@@ -150,3 +150,6 @@ src/main/java/com/prerna/expense_tracker/
 ├── security/        # JWT filter & config
 └── exception/       # Global exception handler
 ```
+
+## 📖 API Documentation
+Swagger UI available at: `http://localhost:9091/swagger-ui/index.html

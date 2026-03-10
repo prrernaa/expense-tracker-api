@@ -3,6 +3,7 @@ package com.prerna.expense_tracker.controller;
 import com.prerna.expense_tracker.dto.ApiResponse;
 import com.prerna.expense_tracker.dto.ExpenseRequest;
 import com.prerna.expense_tracker.dto.ExpenseResponse;
+import com.prerna.expense_tracker.dto.PaginatedResponse;
 import com.prerna.expense_tracker.service.ExcelExportService;
 import com.prerna.expense_tracker.service.ExpenseService;
 import jakarta.validation.Valid;
@@ -15,8 +16,10 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/expenses")
@@ -32,9 +35,19 @@ public class ExpenseController {
                 .body(ApiResponse.created("Expense created successfully", expenseService.createExpense(request)));
     }
 
+//    @GetMapping
+//    public ResponseEntity<ApiResponse<List<ExpenseResponse>>> getAll() {
+//        return ResponseEntity.ok(ApiResponse.success("Expenses fetched successfully", expenseService.getAllExpenses()));
+//    }
+
     @GetMapping
-    public ResponseEntity<ApiResponse<List<ExpenseResponse>>> getAll() {
-        return ResponseEntity.ok(ApiResponse.success("Expenses fetched successfully", expenseService.getAllExpenses()));
+    public ResponseEntity<ApiResponse<PaginatedResponse<ExpenseResponse>>> getAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "date") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+
+        return ResponseEntity.ok(expenseService.getAllExpensesPaginated(page, size, sortBy, sortDir));
     }
 
     @PutMapping("/{id}")
@@ -76,6 +89,11 @@ public class ExpenseController {
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<ExpenseResponse>> getById(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.success("Expense fetched successfully", expenseService.getExpenseById(id)));
+    }
+
+    @GetMapping("/summary")
+    public ResponseEntity<ApiResponse<Map<String, BigDecimal>>> getSummary() {
+        return ResponseEntity.ok(expenseService.getExpenseSummary());
     }
 
 }
