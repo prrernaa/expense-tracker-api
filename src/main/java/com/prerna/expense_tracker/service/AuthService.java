@@ -18,6 +18,8 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtil;
     private final AuthenticationManager authenticationManager;
+    private final TokenBlacklistService tokenBlacklistService; // add this field
+
 
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -45,5 +47,14 @@ public class AuthService {
 
         String token = jwtUtil.generateToken(user.getEmail());
         return new AuthResponse(token, user.getEmail(), user.getName());
+    }
+
+    public ApiResponse<Void> logout(String authHeader) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            long expirationTime = jwtUtil.getExpirationTime(token);
+            tokenBlacklistService.blacklistToken(token, expirationTime);
+        }
+        return ApiResponse.success("Logged out successfully", null);
     }
 }

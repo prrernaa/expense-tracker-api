@@ -52,4 +52,14 @@ public class JwtUtils {
             return false;
         }
     }
+
+    public long getExpirationTime(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .getExpiration()
+                .getTime();
+    }
 }
