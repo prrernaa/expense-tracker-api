@@ -2,8 +2,9 @@ package com.prerna.expense_tracker.service;
 
 import com.prerna.expense_tracker.dto.*;
 import com.prerna.expense_tracker.entity.User;
+import com.prerna.expense_tracker.kafka.UserRegisteredEvent;
+import com.prerna.expense_tracker.kafka.UserRegisteredProducer;
 import com.prerna.expense_tracker.repository.UserRepository;
-import com.prerna.expense_tracker.security.JwtUtils;
 import com.prerna.expense_tracker.security.JwtUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.*;
@@ -18,7 +19,8 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtil;
     private final AuthenticationManager authenticationManager;
-    private final TokenBlacklistService tokenBlacklistService; // add this field
+    private final TokenBlacklistService tokenBlacklistService;
+    private final UserRegisteredProducer userRegisteredProducer;
 
 
     public AuthResponse register(RegisterRequest request) {
@@ -32,7 +34,15 @@ public class AuthService {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .build();
 
-        userRepository.save(user);
+        User savedUser =userRepository.save(user);
+
+        // 👇 ADD THIS — publish Kafka event
+        userRegisteredProducer.publishUserRegisteredEvent(new UserRegisteredEvent(
+                savedUser.getId().toString(),
+                savedUser.getEmail(),
+                savedUser.getName()
+        ));
+
         String token = jwtUtil.generateToken(user.getEmail());
         return new AuthResponse(token, user.getEmail(), user.getName());
     }
