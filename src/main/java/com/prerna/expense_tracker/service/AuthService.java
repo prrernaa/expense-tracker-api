@@ -36,7 +36,7 @@ public class AuthService {
 
         User savedUser =userRepository.save(user);
 
-        // 👇 ADD THIS — publish Kafka event
+        // 👇 publish Kafka event
         userRegisteredProducer.publishUserRegisteredEvent(new UserRegisteredEvent(
                 savedUser.getId().toString(),
                 savedUser.getEmail(),
