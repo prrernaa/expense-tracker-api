@@ -1,6 +1,6 @@
 # 💰 Expense Tracker API
 
-A production-grade RESTful API for personal expense management built with Java Spring Boot, featuring JWT authentication, Redis-based session management, pagination, Excel export, health monitoring and Docker support.
+A production-grade RESTful API for personal expense management built with Java Spring Boot, featuring JWT authentication, Redis-based session management, API audit logging, pagination, Excel export, health monitoring and Docker support.
 
 ![Java](https://img.shields.io/badge/Java-21-orange)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0-green)
@@ -21,6 +21,7 @@ A production-grade RESTful API for personal expense management built with Java S
 - ✅ Filter expenses by category and date range
 - ✅ Category-wise expense summary with total
 - ✅ Excel export for expense reports
+- ✅ API Audit Logging — every request logged with method, URL, timestamp, IP & user agent
 - ✅ Standard API response wrapper with centralized exception handling
 - ✅ API Documentation with Swagger OpenAPI + JWT support
 - ✅ Health Monitoring with Spring Boot Actuator
@@ -246,11 +247,17 @@ src/main/java/com/prerna/expense_tracker/
 ├── repository/          # Database operations
 │   ├── UserRepository
 │   ├── CategoryRepository
-│   └── ExpenseRepository
+│   ├── ExpenseRepository
+│   └── VisitorRepository
 ├── entity/              # JPA entities
 │   ├── User
 │   ├── Category
-│   └── Expense
+│   ├── Expense
+│   └── Visitor
+├── audit/               # API audit logging
+│   ├── VisitorLogger
+│   ├── VisitorService
+│   └── HttpRequestResponseUtils
 ├── dto/                 # Request/Response objects
 │   ├── ApiResponse
 │   ├── PaginatedResponse
@@ -262,7 +269,8 @@ src/main/java/com/prerna/expense_tracker/
 │   ├── JwtAuthFilter
 │   └── SecurityConfig
 ├── config/              # App configuration
-│   └── SwaggerConfig
+│   ├── SwaggerConfig
+│   └── AppConfig
 └── exception/           # Global exception handler
     └── GlobalExceptionHandler
 ```
@@ -293,6 +301,22 @@ Request → JwtAuthFilter
 
 ---
 
+## 📋 API Audit Logging
+
+Every incoming API request is automatically logged to the database via `VisitorLogger`:
+
+| Field | Description |
+|-------|-------------|
+| HTTP Method | GET, POST, PUT, DELETE |
+| Request URL | Full endpoint path |
+| IP Address | Caller's IP address |
+| User Agent | Browser / client info |
+| Timestamp | Exact date and time of request |
+
+This provides a complete audit trail of all API activity — useful for monitoring, debugging, and security analysis.
+
+---
+
 ## 🩺 Health Monitoring
 
 Running on separate port for security isolation:
@@ -320,6 +344,7 @@ The `docker-compose.yml` spins up:
 - **PostgreSQL** on port 5433
 - **Spring Boot App** on port 9091
 - **Actuator Health** on port 9092
+
 ```bash
 docker-compose up --build    # Start
 docker-compose down          # Stop
