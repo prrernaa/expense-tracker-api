@@ -61,7 +61,9 @@ docker-compose up --build
 ```
 
 App runs at `http://localhost:9091` ✅
+
 Swagger UI at `http://localhost:9091/swagger-ui/index.html` ✅
+
 Health Check at `http://localhost:9092/actuator/health` ✅
 
 ### Option 2 — Run Locally
